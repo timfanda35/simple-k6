@@ -1,5 +1,13 @@
 # Simple K6
 
+> [!CAUTION]
+> This is just a workable POC.
+> It does not filter the incoming websocket message. Be care for it.
+
+Web UI
+
+![](doc/webui.jpg)
+
 Grafana Dashboard: https://grafana.com/grafana/dashboards/4411-k6-load-testing-results/
 
 ![](doc/dashboard.jpg)
