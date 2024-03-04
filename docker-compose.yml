@@ -7,6 +7,7 @@ networks:
 services:
   influxdb:
     image: influxdb:1.8
+    restart: unless-stopped
     networks:
       - k6
       - grafana
@@ -17,6 +18,7 @@ services:
 
   grafana:
     image: grafana/grafana:9.3.8
+    restart: unless-stopped
     networks:
       - grafana
     ports:
@@ -30,6 +32,7 @@ services:
 
   app:
     image: simple-k6
+    restart: unless-stopped
     networks:
       - k6
     ports:
