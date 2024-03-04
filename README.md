@@ -27,3 +27,19 @@ cd simple-k6
 make docker-build
 docker compose up -d
 ```
+
+## Note
+
+The container user is k6
+
+```
+uid=12345(k6) gid=12345(k6) groups=12345(k6)
+```
+
+We can grant permission on Ubuntu:
+
+```bash
+sudo apt-get install -y acl
+
+setfacl -m u:12345:rwx reports
+```
