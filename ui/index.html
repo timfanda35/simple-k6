@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Simple K6</title>
+
+    <link rel="stylesheet" href="./simple.min.css">
+    <link rel="stylesheet" href="./xterm.css">
+    <style>
+        .w-full {
+            width: 100%;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: end;
+            gap: 1rem;
+        }
+
+        .flex {
+            display: flex;
+        }
+
+        .between {
+            justify-content: space-between;
+        }
+    </style>
+
+    <script src="./xterm.js"></script>
+</head>
+<body>
+    <div>
+        <p>
+            <label for="targetUrl">Target URL</label>
+            <input class="w-full" type="text" id="targetUrl" name="targetUrl" value="http://test.k6.io">
+        </p>
+        <div class="flex between">
+            <p>
+                <label for="vu">VU</label>
+                <input class="w-full" type="number" id="vu" name="vu" value="1">
+            </p>
+            <p>
+                <label for="duration">Duration(Second)</label>
+                <input class="w-full" type="number" id="duration" name="duration" value="30">
+            </p>
+        </div>
+
+        <div class="button-group">
+            <button id="btnSubmit" onclick="commandRun()">SUBMIT</button>
+            <button id="btnKill" onclick="commandKill()">Kill</button>
+            <button id="btnClear" onclick="commandClear()">CLEAR</button>
+            <button id="btnGrafana" onclick="showGrafana()">Grafana(port: 3000)</button>
+            <button id="btnK6" onclick="showK6()">K6 Status(port: 5665)</button>
+        </div>
+    </div>
+
+    <div style="width: 736px; height: 408px">
+        <div id="terminal"></div>
+    </div>
+
+    <script>
+        const term = new Terminal();
+        const socket = new WebSocket(`ws://${window.location.host}/webterminal`);
+
+        const initXTerm = () => {
+            term.open(document.querySelector("#terminal"));
+
+            socket.onmessage = (event) => {
+                term.write(event.data);
+            }
+
+            socket.onopen = (_event) => {
+                commandClear();
+            }
+        }
+
+        const commandRun = (_event) => {
+            commandKill();
+
+            const url = document.querySelector("#targetUrl").value;
+            const vu = document.querySelector("#vu").value;
+            const duration = document.querySelector("#duration").value;
+            const report = (new Date()).toISOString().slice(0, 19);
+
+            const k6Env = [
+                `K6_WEB_DASHBOARD=true`,
+                `K6_WEB_DASHBOARD_EXPORT=reports/${report}.html`,
+            ].join(" ");
+            const k6Params = [
+                `-u ${vu}`,
+                `-d ${duration}s`,
+                `-e TARGET_URL=${url}`
+            ].join(" ");
+            const k6Command = `${k6Env} k6 run ${k6Params} scripts/script.js\n`;
+
+            socket.send(k6Command);
+
+            setTimeout(() => {
+                window.open(`http://${window.location.hostname}:5665`, "_blank");
+            }, 1000);
+        }
+
+        const commandClear = (_event) => {
+            socket.send("clear\n");
+        }
+
+        const commandKill = (_event) => {
+            socket.send("\x03\n");
+        }
+
+        const showGrafana = (_event) => {
+            window.open(`http://${window.location.hostname}:3000`, "_blank");
+        }
+
+        const showK6 = (_event) => {
+            window.open(`http://${window.location.hostname}:5665`, "_blank");
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+           initXTerm();
+        });
+    </script>
+</body>
+</html>
